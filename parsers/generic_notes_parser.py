@@ -2,7 +2,7 @@ import re
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 from parsers.base import NoteParser
 
 
@@ -70,7 +70,7 @@ class GenericNotesParser(NoteParser):
         links: List[str] = []
         matches = re.finditer(self.URL_PATTERN, text)
         
-        seen_links: set[str] = set()
+        seen_links: Set[str] = set()
         for match in matches:
             link: str = match.group(0)
             if link not in seen_links:

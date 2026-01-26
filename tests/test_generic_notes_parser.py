@@ -298,9 +298,9 @@ class TestGenericNotesParser(unittest.TestCase):
         match = re.match(pattern, text)
         
         self.assertIsNotNone(match)
-        assert match is not None
-        self.assertEqual(match.group(1), '☐')
-        self.assertEqual(match.group(2), 'Some task')
+        if match is not None:
+            self.assertEqual(match.group(1), '☐')
+            self.assertEqual(match.group(2), 'Some task')
 
     def test_checkbox_pattern_matches_checked(self) -> None:
         import re
@@ -309,9 +309,9 @@ class TestGenericNotesParser(unittest.TestCase):
         match = re.match(pattern, text)
         
         self.assertIsNotNone(match)
-        assert match is not None
-        self.assertEqual(match.group(1), '☑')
-        self.assertEqual(match.group(2), 'Completed task')
+        if match is not None:
+            self.assertEqual(match.group(1), '☑')
+            self.assertEqual(match.group(2), 'Completed task')
 
     def test_checkbox_pattern_matches_with_whitespace(self) -> None:
         import re

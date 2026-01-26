@@ -129,15 +129,16 @@ class TimeEntryParser(NoteParser):
                     time_str: str = self._parse_time_code(time_code)
                     original_order.append(time_str)
                     
-                    timestamp: str
+                    timestamp_str: str
                     if base_date:
-                        timestamp = f"{base_date}T{time_str}:00"
+                        timestamp_str = f"{base_date}T{time_str}:00"
                     else:
-                        timestamp = f"{time_str}:00"
+                        timestamp_str = f"{time_str}:00"
                     
                     entries.append({
-                        'timestamp': timestamp,
+                        'timestamp': timestamp_str,
                         'time': time_str,
+                        'date': base_date,
                         'activity': activity,
                         'raw_line': line.strip()
                     })

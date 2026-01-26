@@ -1,29 +1,37 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Generic Note Schema",
+  "description": "Schema for generic notes with links, checkboxes, and text",
   "type": "object",
   "properties": {
     "note_id": {
-      "type": "string"
+      "type": "string",
+      "description": "Unique identifier of the note"
     },
     "title": {
-      "type": "string"
+      "type": "string",
+      "description": "Title of the note"
     },
     "links": {
       "type": "array",
+      "description": "List of URLs found in the note",
       "items": {
         "type": "string"
       }
     },
     "checkboxes": {
       "type": "array",
+      "description": "List of checkbox items in the note",
       "items": {
         "type": "object",
         "properties": {
           "checked": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether the checkbox is checked"
           },
           "text": {
-            "type": "string"
+            "type": "string",
+            "description": "Text content of the checkbox item"
           }
         },
         "required": ["checked", "text"]
@@ -31,6 +39,7 @@
     },
     "rest": {
       "type": "array",
+      "description": "Other text content that is neither a link nor a checkbox",
       "items": {
         "type": "string"
       }
