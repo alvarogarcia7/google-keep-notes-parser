@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hacker News Link Schema",
+  "description": "Schema for Hacker News links extracted from notes",
+  "type": "object",
+  "properties": {
+    "note_id": {
+      "type": "string",
+      "description": "Unique identifier of the note"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the note"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Primary Hacker News URL (first URL found)"
+    },
+    "item_id": {
+      "type": "string",
+      "pattern": "^\\d+$",
+      "description": "Hacker News item ID extracted from the URL"
+    },
+    "labels": {
+      "type": "array",
+      "description": "Labels associated with the note",
+      "items": {
+        "type": "string"
+      }
+    },
+    "description": {
+      "type": "string",
+      "description": "Full text content of the note"
+    },
+    "hn_links": {
+      "type": "array",
+      "description": "All Hacker News links found in the note",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Hacker News URL"
+          },
+          "item_id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "Hacker News item ID"
+          }
+        },
+        "required": ["url", "item_id"]
+      }
+    }
+  },
+  "required": ["note_id", "title", "url", "item_id", "labels", "description"]
+}

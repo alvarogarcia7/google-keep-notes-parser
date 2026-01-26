@@ -1,0 +1,40 @@
+settings*.cfg
+skiptest.py
+fuzzy.py
+zz*.py
+configs.txt
+.DS_Store
+mdfiles/
+backup/
+import/
+.vscode/
+**/__pycache__
+
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Type checkers
+.mypy_cache/
+.pytype/
+.ruff_cache/
+
+# uv (Python package manager)
+uv.lock
+.python-version
+
+# Makefile artifacts
+*.o
+*.so
+*.dylib
+*.exe
+*.out
+*.log
+.PHONY
+
+
+*.egg-info/
+
+/parsed_output/
+

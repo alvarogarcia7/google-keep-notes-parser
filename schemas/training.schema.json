@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Training Workout Schema",
+  "description": "Schema for structured workout data extracted from training notes",
+  "type": "object",
+  "properties": {
+    "note_id": {
+      "type": "string",
+      "description": "Unique identifier of the note"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the workout note"
+    },
+    "workout_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date and time when the workout was created"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date and time when the workout was last updated"
+    },
+    "exercises": {
+      "type": "array",
+      "description": "List of exercises performed in the workout",
+      "items": {
+        "type": "object",
+        "properties": {
+          "exercise_name": {
+            "type": "string",
+            "description": "Full name of the exercise"
+          },
+          "abbreviation": {
+            "type": "string",
+            "description": "Exercise abbreviation used in the note"
+          },
+          "sets": {
+            "type": "array",
+            "description": "List of sets performed for this exercise",
+            "items": {
+              "type": "object",
+              "properties": {
+                "set": {
+                  "type": "integer",
+                  "description": "Set number",
+                  "minimum": 1
+                },
+                "reps": {
+                  "type": "integer",
+                  "description": "Number of repetitions",
+                  "minimum": 1
+                },
+                "weight": {
+                  "type": "number",
+                  "description": "Weight used (in kg or lbs)",
+                  "minimum": 0
+                }
+              },
+              "required": ["set", "reps", "weight"]
+            }
+          },
+          "total_sets": {
+            "type": "integer",
+            "description": "Total number of sets for this exercise",
+            "minimum": 0
+          },
+          "raw_line": {
+            "type": "string",
+            "description": "Original text line from the note"
+          }
+        },
+        "required": ["exercise_name", "abbreviation", "sets", "total_sets", "raw_line"]
+      }
+    },
+    "completed_activities": {
+      "type": "array",
+      "description": "Timestamped entries for completed activities",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the activity was completed"
+          },
+          "activity": {
+            "type": "string",
+            "description": "Description of the completed activity"
+          }
+        },
+        "required": ["timestamp", "activity"]
+      }
+    },
+    "raw_text": {
+      "type": "string",
+      "description": "Original raw text of the note"
+    }
+  },
+  "required": ["note_id", "title", "workout_date", "exercises", "completed_activities", "raw_text"]
+}

@@ -1,0 +1,85 @@
+[build-system]
+requires = [ "setuptools>=80.10.1" ]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "google-keep-notes-parser"
+version = "0.0.1"
+description = "Google Keep Notes Parser - Parse Google Keep Notes using your own formats"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+authors = [
+    {name = "Alvaro Garcia"}
+]
+keywords = ["google-keep", "markdown", "parser", "notes"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+]
+
+dependencies = [
+    "click",
+    "pillow",
+    "jsonschema",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.19.1",
+    "ruff>=0.14.14",
+    "pytest>=9.0.2",
+]
+
+
+[tool.setuptools]
+py-modules = []
+
+[tool.mypy]
+python_version = "3.14"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_unimported = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+check_untyped_defs = true
+strict_equality = true
+strict = true
+
+[[tool.mypy.overrides]]
+module = "parsers.*"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_calls = true
+
+[[tool.mypy.overrides]]
+module = "parse_notes"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = "click.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "PIL.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "jsonschema.*"
+ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "pytest>=9.0.2",
+]
