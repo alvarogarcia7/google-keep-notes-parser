@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "note_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "checkboxes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "checked": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": ["checked", "text"]
+      }
+    },
+    "rest": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["note_id", "title", "links", "checkboxes", "rest"]
+}

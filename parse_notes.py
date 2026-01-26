@@ -9,6 +9,7 @@ from parsers.base import ParserRegistry
 from parsers.hackernews_parser import HackerNewsParser
 from parsers.time_entry_parser import TimeEntryParser
 from parsers.training_parser import TrainingParser
+from parsers.generic_notes_parser import GenericNotesParser
 
 
 def create_output_path(output_dir: str) -> None:
@@ -52,6 +53,7 @@ def main(input_dir: str, output_dir: str) -> None:
     registry.register(HackerNewsParser)
     registry.register(TimeEntryParser)
     registry.register(TrainingParser)
+    registry.register(GenericNotesParser)
     
     json_files = [f for f in os.listdir(input_dir) if f.endswith('.json')]
     
