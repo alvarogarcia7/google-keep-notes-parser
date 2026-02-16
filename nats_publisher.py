@@ -6,11 +6,14 @@ Reads sample training data and publishes to NATS
 
 import asyncio
 import json
+import os
 import sys
 import time
 from pathlib import Path
 
 import nats
+
+NATS_URL = os.environ.get("NATS_URL", "nats://localhost:4222")
 
 
 async def main():
@@ -27,9 +30,9 @@ async def main():
 
     # Connect to NATS
     try:
-        nc = await nats.connect("nats://localhost:4222")
+        nc = await nats.connect(NATS_URL)
     except Exception as e:
-        print(f"Error: Could not connect to NATS at localhost:4222")
+        print(f"Error: Could not connect to NATS at {NATS_URL}")
         print(f"Make sure NATS server is running: {e}")
         sys.exit(1)
 
