@@ -1,0 +1,32 @@
+start_keywords:
+  - wake up
+  - woke up
+  - despertar
+  - awake
+
+end_keywords:
+  - sleep
+  - dormir
+  - end
+  - fin
+  - bed
+
+continue_keywords:
+  - cont
+  - continue
+
+work_projects:
+  - work
+  - cms
+  - meeting
+  - setup
+  - code
+  - development
+
+personal_projects:
+  - gym
+  - breakfast
+  - shower
+  - commute
+  - toilet
+  - sleep

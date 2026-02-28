@@ -1,6 +1,7 @@
 import re
 import json
 import os
+import yaml
 from typing import Any, Dict, List, Tuple, Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -29,13 +30,18 @@ class TimeEntryParser(NoteParser):
         'wk': 'work',
     }
     
-    WORK_PROJECTS: set = {'work', 'cms', 'meeting', 'setup', 'code', 'development'}
-    PERSONAL_PROJECTS: set = {'gym', 'breakfast', 'shower', 'commute', 'toilet', 'sleep'}
-    
-    SLEEP_KEYWORDS: set = {'sleep', 'dormir'}
-    WAKEUP_KEYWORDS: set = {'wake up', 'woke up', 'despertar', 'awake'}
-    END_KEYWORDS: set = {'end', 'fin'}
-    CONTINUE_KEYWORDS: set = {'cont', 'continue'}
+    def __init__(self) -> None:
+        tokens_path: str = os.path.join(os.path.dirname(__file__), 'tokens.yaml')
+        with open(tokens_path, 'r') as f:
+            tokens: Dict[str, Any] = yaml.safe_load(f)
+        
+        self.START_KEYWORDS: set[str] = set(tokens.get('start_keywords', []))
+        self.STOP_KEYWORDS: set[str] = set(tokens.get('end_keywords', []))
+        end_keywords = set(tokens.get('end_keywords', []))
+        self.END_KEYWORDS: set[str] = end_keywords - self.STOP_KEYWORDS if end_keywords else set()
+        self.CONTINUE_KEYWORDS: set[str] = set(tokens.get('continue_keywords', []))
+        self.WORK_PROJECTS: set[str] = set(tokens.get('work_projects', []))
+        self.PERSONAL_PROJECTS: set[str] = set(tokens.get('personal_projects', []))
     
     def can_parse(self, note_data: Any) -> bool:
         if not isinstance(note_data, dict):
@@ -136,13 +142,13 @@ class TimeEntryParser(NoteParser):
         
         return 'personal'
     
-    def _is_sleep_activity(self, activity: str) -> bool:
+    def _is_stop_activity(self, activity: str) -> bool:
         activity_lower = activity.lower()
-        return any(keyword in activity_lower for keyword in self.SLEEP_KEYWORDS)
+        return any(keyword in activity_lower for keyword in self.STOP_KEYWORDS)
     
-    def _is_wakeup_activity(self, activity: str) -> bool:
+    def _is_start_activity(self, activity: str) -> bool:
         activity_lower = activity.lower()
-        return any(keyword in activity_lower for keyword in self.WAKEUP_KEYWORDS)
+        return any(keyword in activity_lower for keyword in self.START_KEYWORDS)
     
     def _is_end_keyword(self, activity: str) -> bool:
         activity_lower = activity.lower().strip()
@@ -272,7 +278,7 @@ class TimeEntryParser(NoteParser):
                     if last_work_activity:
                         activity = last_work_activity
                     else:
-                        parse_warnings.append(f"'cont' keyword used but no previous work activity found")
+                        parse_warnings.append("'cont' keyword used but no previous work activity found")
                         continue
                 
                 continuation = self._check_continuation_pattern(activity)
@@ -282,7 +288,7 @@ class TimeEntryParser(NoteParser):
                     time_str = start_time_str
                     activity = remaining_activity if remaining_activity else "continued task"
                 else:
-                    time_str: str = self._parse_time_code(time_code, am_pm)
+                    time_str = self._parse_time_code(time_code, am_pm)
                 
                 time_minutes = self._time_to_minutes(time_str)
                 original_order.append(time_str)
@@ -301,15 +307,15 @@ class TimeEntryParser(NoteParser):
                     date_str = base_date_str
                     timestamp_str = f"{time_str}:00" if not base_date_str else f"{base_date_str}T{time_str}:00"
                 
-                if self._is_wakeup_activity(activity) and previous_entry and self._is_sleep_activity(previous_entry['activity']):
+                if self._is_start_activity(activity) and previous_entry and self._is_stop_activity(previous_entry['activity']):
                     pass
-                elif previous_entry and self._is_wakeup_activity(activity):
+                elif previous_entry and self._is_start_activity(activity):
                     prev_time = previous_entry['time']
+                    sleep_date: Optional[datetime] = None
                     if current_date:
                         sleep_date = current_date - timedelta(days=1)
                     else:
-                        sleep_date_obj = base_date - timedelta(days=1) if base_date else None
-                        sleep_date = sleep_date_obj
+                        sleep_date = base_date - timedelta(days=1) if base_date else None
                     
                     if sleep_date:
                         sleep_entry = {
@@ -328,7 +334,7 @@ class TimeEntryParser(NoteParser):
                 main_activity, sub_activity = self._parse_activity(activity)
                 project_type = self._classify_project(activity)
                 
-                entry = {
+                entry: Dict[str, Any] = {
                     'timestamp': timestamp_str,
                     'time': time_str,
                     'date': date_str,
@@ -343,7 +349,7 @@ class TimeEntryParser(NoteParser):
                     entry['end_time'] = end_time_str
                     entry['duration'] = self._time_to_minutes(end_time_str) - self._time_to_minutes(start_time_str)
                 
-                if self._is_sleep_activity(activity):
+                if self._is_stop_activity(activity):
                     entry['project'] = 'sleep'
                     if current_date:
                         next_date = current_date + timedelta(days=1)
