@@ -1,8 +1,8 @@
 import re
 import json
 import os
-from typing import Any, Dict, List, Tuple
-from datetime import datetime
+from typing import Any, Dict, List, Tuple, Optional
+from datetime import datetime, timedelta
 from dataclasses import dataclass
 from parsers.base import NoteParser
 
@@ -20,7 +20,22 @@ class ParseResult:
 
 
 class TimeEntryParser(NoteParser):
-    TIME_CODE_PATTERN: str = r'^\s*[\u2610\u2611]?\s*(\d{3,4})\s+(.+)$'
+    TIME_CODE_PATTERN: str = r'^\s*[\u2610\u2611]?\s*(\d{1,4})\s*([ap]m?|[AP]M?)?\s+(.+)$'
+    CONTINUATION_PATTERN: str = r'^(\d{1,4})\s*([ap]m?|[AP]M?)?\s+(\d{1,4})\s*([ap]m?|[AP]M?)?\s+(.*)$'
+    
+    ACTIVITY_SHORTCUTS: Dict[str, str] = {
+        'st': 'strength training',
+        'gym': 'gym class',
+        'wk': 'work',
+    }
+    
+    WORK_PROJECTS: set = {'work', 'cms', 'meeting', 'setup', 'code', 'development'}
+    PERSONAL_PROJECTS: set = {'gym', 'breakfast', 'shower', 'commute', 'toilet', 'sleep'}
+    
+    SLEEP_KEYWORDS: set = {'sleep', 'dormir'}
+    WAKEUP_KEYWORDS: set = {'wake up', 'woke up', 'despertar', 'awake'}
+    END_KEYWORDS: set = {'end', 'fin'}
+    CONTINUE_KEYWORDS: set = {'cont', 'continue'}
     
     def can_parse(self, note_data: Any) -> bool:
         if not isinstance(note_data, dict):
@@ -37,43 +52,120 @@ class TimeEntryParser(NoteParser):
             match = re.match(self.TIME_CODE_PATTERN, line.strip())
             if match:
                 time_code: str = match.group(1)
-                if self._is_valid_time_code(time_code):
+                am_pm: Optional[str] = match.group(2)
+                if self._is_valid_time_code(time_code, am_pm):
                     time_entry_count += 1
         
         return time_entry_count >= 2
     
-    def _is_valid_time_code(self, time_code: str) -> bool:
-        hours: int
-        minutes: int
+    def _is_valid_time_code(self, time_code: str, am_pm: Optional[str] = None) -> bool:
+        try:
+            time_int = int(time_code)
+        except ValueError:
+            return False
         
-        if len(time_code) == 3:
+        if am_pm:
+            hours = time_int if len(time_code) <= 2 else int(time_code[:-2])
+            minutes = 0 if len(time_code) <= 2 else int(time_code[-2:])
+            return 1 <= hours <= 12 and 0 <= minutes <= 59
+        
+        if len(time_code) == 1 or len(time_code) == 2:
+            return 0 <= time_int <= 23
+        elif len(time_code) == 3:
+            hours = int(time_code[0])
+            minutes = int(time_code[1:])
+            return 0 <= hours <= 9 and 0 <= minutes <= 59
+        elif len(time_code) == 4:
+            hours = int(time_code[:2])
+            minutes = int(time_code[2:])
+            return 0 <= hours <= 23 and 0 <= minutes <= 59
+        else:
+            return False
+    
+    def _parse_time_code(self, time_code: str, am_pm: Optional[str] = None) -> str:
+        time_int = int(time_code)
+        
+        if am_pm:
+            am_pm_lower = am_pm.lower()
+            is_pm = am_pm_lower.startswith('p')
+            
+            if len(time_code) <= 2:
+                hours = time_int
+                minutes = 0
+            else:
+                hours = time_int // 100
+                minutes = time_int % 100
+            
+            if is_pm and hours != 12:
+                hours += 12
+            elif not is_pm and hours == 12:
+                hours = 0
+            
+            return f"{hours:02d}:{minutes:02d}"
+        
+        if len(time_code) == 1 or len(time_code) == 2:
+            hours = time_int
+            minutes = 0
+        elif len(time_code) == 3:
             hours = int(time_code[0])
             minutes = int(time_code[1:])
         elif len(time_code) == 4:
             hours = int(time_code[:2])
             minutes = int(time_code[2:])
         else:
-            return False
-        
-        return 0 <= hours <= 23 and 0 <= minutes <= 59
-    
-    def _parse_time_code(self, time_code: str) -> str:
-        hours_str: str
-        minutes_str: str
-        
-        if len(time_code) == 3:
-            hours_str = time_code[0]
-            minutes_str = time_code[1:]
-        elif len(time_code) == 4:
-            hours_str = time_code[:2]
-            minutes_str = time_code[2:]
-        else:
             return ""
         
-        hours_str = hours_str.zfill(2)
-        minutes_str = minutes_str.zfill(2)
+        return f"{hours:02d}:{minutes:02d}"
+    
+    def _expand_shortcuts(self, activity: str) -> str:
+        words = activity.split()
+        if words and words[0].lower() in self.ACTIVITY_SHORTCUTS:
+            return self.ACTIVITY_SHORTCUTS[words[0].lower()] + ' ' + ' '.join(words[1:])
+        return activity
+    
+    def _classify_project(self, activity: str) -> str:
+        activity_lower = activity.lower()
         
-        return f"{hours_str}:{minutes_str}"
+        for keyword in self.WORK_PROJECTS:
+            if keyword in activity_lower:
+                return 'work'
+        
+        for keyword in self.PERSONAL_PROJECTS:
+            if keyword in activity_lower:
+                return 'personal'
+        
+        return 'personal'
+    
+    def _is_sleep_activity(self, activity: str) -> bool:
+        activity_lower = activity.lower()
+        return any(keyword in activity_lower for keyword in self.SLEEP_KEYWORDS)
+    
+    def _is_wakeup_activity(self, activity: str) -> bool:
+        activity_lower = activity.lower()
+        return any(keyword in activity_lower for keyword in self.WAKEUP_KEYWORDS)
+    
+    def _is_end_keyword(self, activity: str) -> bool:
+        activity_lower = activity.lower().strip()
+        return activity_lower in self.END_KEYWORDS
+    
+    def _is_continue_keyword(self, activity: str) -> bool:
+        activity_lower = activity.lower().strip()
+        return activity_lower in self.CONTINUE_KEYWORDS
+    
+    def _check_continuation_pattern(self, activity: str) -> Optional[Tuple[str, str, str]]:
+        match = re.match(self.CONTINUATION_PATTERN, activity)
+        if match:
+            start_time = match.group(1)
+            start_am_pm = match.group(2)
+            end_time = match.group(3)
+            end_am_pm = match.group(4)
+            rest_of_activity = match.group(5).strip()
+            
+            if self._is_valid_time_code(start_time, start_am_pm) and self._is_valid_time_code(end_time, end_am_pm):
+                start_str = self._parse_time_code(start_time, start_am_pm)
+                end_str = self._parse_time_code(end_time, end_am_pm)
+                return (start_str, end_str, rest_of_activity)
+        return None
     
     def parse(self, note_data: Any) -> ParseResult:
         if not isinstance(note_data, dict):
@@ -86,12 +178,18 @@ class TimeEntryParser(NoteParser):
         created: str = timestamps.get('created', '')
         edited: str = timestamps.get('edited', '')
         
-        entries, parse_warnings = self._extract_time_entries(text, created)
+        entries, parse_warnings = self._extract_time_entries(text, created, edited)
+        
+        first_entry_date = self._extract_date_from_timestamp(created)
+        if entries:
+            non_auto_entries = [e for e in entries if '[auto-generated' not in e['raw_line']]
+            if non_auto_entries:
+                first_entry_date = non_auto_entries[0]['date']
         
         result = ParseResult(
             note_id=note_data.get('id', ''),
             title=title,
-            date=self._extract_date_from_timestamp(created),
+            date=first_entry_date,
             created=created,
             last_updated=edited,
             time_entries=entries,
@@ -122,51 +220,158 @@ class TimeEntryParser(NoteParser):
         
         return activity, ''
     
-    def _extract_time_entries(self, text: str, created_timestamp: str) -> Tuple[List[Dict[str, Any]], List[str]]:
+    def _time_to_minutes(self, time_str: str) -> int:
+        parts = time_str.split(':')
+        return int(parts[0]) * 60 + int(parts[1])
+    
+    def _extract_time_entries(self, text: str, created_timestamp: str, edited_timestamp: str) -> Tuple[List[Dict[str, Any]], List[str]]:
         entries: List[Dict[str, Any]] = []
         parse_warnings: List[str] = []
         lines: List[str] = text.strip().split('\n')
         
-        base_date: str = self._extract_date_from_timestamp(created_timestamp)
+        base_date_str: str = self._extract_date_from_timestamp(created_timestamp)
+        base_date: Optional[datetime] = None
+        if base_date_str:
+            try:
+                base_date = datetime.fromisoformat(base_date_str)
+            except ValueError:
+                pass
+        
+        current_date = base_date
+        last_time_minutes = -1
+        last_work_activity: Optional[str] = None
+        parsing_active = True
+        previous_entry: Optional[Dict[str, Any]] = None
+        
+        created_date = self._extract_date_from_timestamp(created_timestamp)
+        edited_date = self._extract_date_from_timestamp(edited_timestamp)
+        spans_multiple_days = created_date != edited_date
         
         original_order: List[str] = []
+        
         for line in lines:
             match = re.match(self.TIME_CODE_PATTERN, line.strip())
             if match:
                 time_code: str = match.group(1)
-                activity: str = match.group(2).strip()
+                am_pm: Optional[str] = match.group(2)
+                activity: str = match.group(3).strip()
                 
-                if self._is_valid_time_code(time_code):
-                    time_str: str = self._parse_time_code(time_code)
-                    original_order.append(time_str)
-                    
-                    timestamp_str: str
-                    if base_date:
-                        timestamp_str = f"{base_date}T{time_str}:00"
+                if not self._is_valid_time_code(time_code, am_pm):
+                    continue
+                
+                if self._is_end_keyword(activity):
+                    parsing_active = False
+                    continue
+                
+                if not parsing_active:
+                    parsing_active = True
+                
+                activity = self._expand_shortcuts(activity)
+                
+                if self._is_continue_keyword(activity):
+                    if last_work_activity:
+                        activity = last_work_activity
                     else:
-                        timestamp_str = f"{time_str}:00"
+                        parse_warnings.append(f"'cont' keyword used but no previous work activity found")
+                        continue
+                
+                continuation = self._check_continuation_pattern(activity)
+                
+                if continuation:
+                    start_time_str, end_time_str, remaining_activity = continuation
+                    time_str = start_time_str
+                    activity = remaining_activity if remaining_activity else "continued task"
+                else:
+                    time_str: str = self._parse_time_code(time_code, am_pm)
+                
+                time_minutes = self._time_to_minutes(time_str)
+                original_order.append(time_str)
+                
+                if time_minutes < last_time_minutes:
+                    if not spans_multiple_days:
+                        parse_warnings.append(f"Non-monotonic time detected: {time_str} after previous entries (not allowed when created and edited dates match)")
                     
-                    main_activity, sub_activity = self._parse_activity(activity)
+                    if current_date:
+                        current_date = current_date + timedelta(days=1)
+                
+                if current_date:
+                    date_str = current_date.strftime('%Y-%m-%d')
+                    timestamp_str = f"{date_str}T{time_str}:00"
+                else:
+                    date_str = base_date_str
+                    timestamp_str = f"{time_str}:00" if not base_date_str else f"{base_date_str}T{time_str}:00"
+                
+                if self._is_wakeup_activity(activity) and previous_entry and self._is_sleep_activity(previous_entry['activity']):
+                    pass
+                elif previous_entry and self._is_wakeup_activity(activity):
+                    prev_time = previous_entry['time']
+                    if current_date:
+                        sleep_date = current_date - timedelta(days=1)
+                    else:
+                        sleep_date_obj = base_date - timedelta(days=1) if base_date else None
+                        sleep_date = sleep_date_obj
                     
-                    entries.append({
-                        'timestamp': timestamp_str,
-                        'time': time_str,
-                        'date': base_date,
-                        'activity': activity,
-                        'main_activity': main_activity,
-                        'sub_activity': sub_activity,
-                        'raw_line': line.strip()
-                    })
+                    if sleep_date:
+                        sleep_entry = {
+                            'timestamp': f"{sleep_date.strftime('%Y-%m-%d')}T{prev_time}:00",
+                            'time': prev_time,
+                            'date': sleep_date.strftime('%Y-%m-%d'),
+                            'activity': 'sleep',
+                            'main_activity': 'sleep',
+                            'sub_activity': '',
+                            'project_type': 'personal',
+                            'project': 'sleep',
+                            'raw_line': '[auto-generated from wake up]'
+                        }
+                        entries.append(sleep_entry)
+                
+                main_activity, sub_activity = self._parse_activity(activity)
+                project_type = self._classify_project(activity)
+                
+                entry = {
+                    'timestamp': timestamp_str,
+                    'time': time_str,
+                    'date': date_str,
+                    'activity': activity,
+                    'main_activity': main_activity,
+                    'sub_activity': sub_activity,
+                    'project_type': project_type,
+                    'raw_line': line.strip()
+                }
+                
+                if continuation:
+                    entry['end_time'] = end_time_str
+                    entry['duration'] = self._time_to_minutes(end_time_str) - self._time_to_minutes(start_time_str)
+                
+                if self._is_sleep_activity(activity):
+                    entry['project'] = 'sleep'
+                    if current_date:
+                        next_date = current_date + timedelta(days=1)
+                        current_date = next_date
+                        last_time_minutes = -1
+                    else:
+                        last_time_minutes = time_minutes
+                else:
+                    last_time_minutes = time_minutes
+                
+                entries.append(entry)
+                
+                if project_type == 'work':
+                    last_work_activity = activity
+                
+                previous_entry = entry
         
-        entries.sort(key=lambda x: x['time'])
+        entries.sort(key=lambda x: (x['date'], x['time']))
         
-        sorted_order: List[str] = [entry['time'] for entry in entries]
-        if original_order != sorted_order:
-            warning_msg = (
-                f"Time entries are out of chronological order. "
-                f"Original order: {original_order}, Sorted order: {sorted_order}"
-            )
-            parse_warnings.append(warning_msg)
+        if not spans_multiple_days:
+            sorted_order: List[str] = [entry['time'] for entry in entries if '[auto-generated' not in entry['raw_line']]
+            original_order_filtered = [t for i, t in enumerate(original_order)]
+            if original_order_filtered != sorted_order:
+                warning_msg = (
+                    f"Time entries are out of chronological order. "
+                    f"Original order: {original_order_filtered}, Sorted order: {sorted_order}"
+                )
+                parse_warnings.append(warning_msg)
         
         return entries, parse_warnings
     
