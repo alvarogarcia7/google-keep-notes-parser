@@ -1,4 +1,4 @@
-.PHONY: help install run parse-notes clean docker-build docker-run mypy lint
+.PHONY: help install run parse-notes clean docker-build docker-run mypy lint test
 
 help:
 	@echo "Available targets:"
@@ -7,6 +7,7 @@ help:
 	@echo "  parse-notes   - Run parse_notes.py parser tool"
 	@echo "  mypy          - Run mypy type checking on parsers and parse_notes.py"
 	@echo "  lint          - Run ruff and mypy checks (if installed)"
+	@echo "  test          - Run test suite using pytest"
 	@echo "  clean         - Remove generated files and directories"
 	@echo "  docker-build  - Build Docker image"
 	@echo "  docker-run    - Run Docker container"
@@ -26,6 +27,9 @@ mypy:
 
 lint: mypy
 	ruff check parsers/ parse_notes.py kim.py
+
+test:
+	pytest tests/ test_training_parser.py -v
 
 clean:
 	rm -rf mdfiles/
