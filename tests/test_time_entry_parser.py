@@ -417,6 +417,324 @@ class TestTimeEntryParser(unittest.TestCase):
         self.assertTrue(hasattr(result, 'raw_text'))
         self.assertTrue(hasattr(result, 'warnings'))
 
+    def test_parse_activity_with_single_numbered_sub_item(self) -> None:
+        note_data = {
+            'id': 'sub_activity_single',
+            'title': 'Sub-Activity Single Test',
+            'text': '☐ 0900 Work 1. Code review\n☐ 1000 Break',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 2)
+        self.assertEqual(result.time_entries[0]['activity'], 'Work 1. Code review')
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Code review')
+        self.assertEqual(result.time_entries[1]['activity'], 'Break')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Break')
+        self.assertEqual(result.time_entries[1]['sub_activity'], '')
+
+    def test_parse_activity_with_multiple_numbered_sub_items(self) -> None:
+        note_data = {
+            'id': 'sub_activity_multiple',
+            'title': 'Sub-Activity Multiple Test',
+            'text': '☐ 0900 Work 1. Code review\n☐ 0930 Work 2. Testing\n☐ 1000 Work 3. Documentation',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 3)
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Code review')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[1]['sub_activity'], 'Testing')
+        self.assertEqual(result.time_entries[2]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[2]['sub_activity'], 'Documentation')
+
+    def test_parse_activity_without_sub_items(self) -> None:
+        note_data = {
+            'id': 'no_sub_activity',
+            'title': 'No Sub-Activity Test',
+            'text': '☐ 0900 Morning meeting\n☐ 1000 Coffee break\n☐ 1100 Email',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T11:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 3)
+        for entry in result.time_entries:
+            self.assertEqual(entry['activity'], entry['main_activity'])
+            self.assertEqual(entry['sub_activity'], '')
+
+    def test_parse_mixed_activities_with_and_without_sub_items(self) -> None:
+        note_data = {
+            'id': 'mixed_activities',
+            'title': 'Mixed Activities Test',
+            'text': '☐ 0900 Work 1. Code review\n☐ 0930 Coffee break\n☐ 1000 Work 2. Testing\n☐ 1100 Lunch',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T11:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 4)
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Code review')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Coffee break')
+        self.assertEqual(result.time_entries[1]['sub_activity'], '')
+        self.assertEqual(result.time_entries[2]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[2]['sub_activity'], 'Testing')
+        self.assertEqual(result.time_entries[3]['main_activity'], 'Lunch')
+        self.assertEqual(result.time_entries[3]['sub_activity'], '')
+
+    def test_parse_activity_with_number_but_no_period(self) -> None:
+        note_data = {
+            'id': 'number_no_period',
+            'title': 'Number No Period Test',
+            'text': '☐ 0900 Task 1 complete\n☐ 1000 Task 2 in progress',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 2)
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Task 1 complete')
+        self.assertEqual(result.time_entries[0]['sub_activity'], '')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Task 2 in progress')
+        self.assertEqual(result.time_entries[1]['sub_activity'], '')
+
+    def test_parse_activity_with_multiple_periods(self) -> None:
+        note_data = {
+            'id': 'multiple_periods',
+            'title': 'Multiple Periods Test',
+            'text': '☐ 0900 Work 1. Code review. Final check\n☐ 1000 Meeting 2. Q1 planning. Budget discussion',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 2)
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Code review. Final check')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Meeting')
+        self.assertEqual(result.time_entries[1]['sub_activity'], 'Q1 planning. Budget discussion')
+
+    def test_parse_activity_with_double_digit_numbers(self) -> None:
+        note_data = {
+            'id': 'double_digit_numbers',
+            'title': 'Double Digit Numbers Test',
+            'text': '☐ 0900 Work 10. Code review\n☐ 1000 Work 11. Testing\n☐ 1100 Work 99. Final review',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T11:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 3)
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Code review')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[1]['sub_activity'], 'Testing')
+        self.assertEqual(result.time_entries[2]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[2]['sub_activity'], 'Final review')
+
+    def test_parse_activity_with_whitespace_variations_in_sub_items(self) -> None:
+        note_data = {
+            'id': 'whitespace_sub_items',
+            'title': 'Whitespace Sub Items Test',
+            'text': '☐ 0900 Work  1.  Code review  \n☐ 1000 Meeting 2.    Planning session\n☐ 1100 Break',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T11:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 3)
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Code review')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Meeting')
+        self.assertEqual(result.time_entries[1]['sub_activity'], 'Planning session')
+
+    def test_parse_activity_edge_case_period_at_start(self) -> None:
+        note_data = {
+            'id': 'period_at_start',
+            'title': 'Period At Start Test',
+            'text': '☐ 0900 1. First task\n☐ 1000 Regular task',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 2)
+        self.assertEqual(result.time_entries[0]['main_activity'], '1. First task')
+        self.assertEqual(result.time_entries[0]['sub_activity'], '')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Regular task')
+        self.assertEqual(result.time_entries[1]['sub_activity'], '')
+
+    def test_parse_activity_with_complex_sub_activity_text(self) -> None:
+        note_data = {
+            'id': 'complex_sub_activity',
+            'title': 'Complex Sub-Activity Test',
+            'text': '☐ 0900 Development 1. Implemented feature X with unit tests and documentation\n☐ 1030 Meeting 2. Discussed Q1 goals, budget allocation, and team structure',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:30:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 2)
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Development')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Implemented feature X with unit tests and documentation')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Meeting')
+        self.assertEqual(result.time_entries[1]['sub_activity'], 'Discussed Q1 goals, budget allocation, and team structure')
+
+    def test_parse_validates_schema_with_sub_activities(self) -> None:
+        note_data = {
+            'id': 'schema_validation',
+            'title': 'Schema Validation Test',
+            'text': '☐ 0900 Work 1. Code review\n☐ 1000 Break',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        schema = self.parser.get_schema()
+        
+        for entry in result.time_entries:
+            self.assertIn('main_activity', entry)
+            self.assertIn('sub_activity', entry)
+            self.assertIsInstance(entry['main_activity'], str)
+            self.assertIsInstance(entry['sub_activity'], str)
+        
+        entry_properties = schema['properties']['time_entries']['items']['properties']
+        self.assertIn('main_activity', entry_properties)
+        self.assertIn('sub_activity', entry_properties)
+
+    def test_parse_empty_sub_activity_is_empty_string(self) -> None:
+        note_data = {
+            'id': 'empty_sub_activity',
+            'title': 'Empty Sub-Activity Test',
+            'text': '☐ 0900 Simple task\n☐ 1000 Another task',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        for entry in result.time_entries:
+            self.assertIsInstance(entry['sub_activity'], str)
+            self.assertEqual(entry['sub_activity'], '')
+            self.assertNotEqual(entry['sub_activity'], None)
+
+    def test_parse_activity_preserves_full_activity_text(self) -> None:
+        note_data = {
+            'id': 'preserve_activity',
+            'title': 'Preserve Activity Test',
+            'text': '☐ 0900 Work 1. Code review\n☐ 1000 Regular task',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(result.time_entries[0]['activity'], 'Work 1. Code review')
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Code review')
+        self.assertEqual(result.time_entries[1]['activity'], 'Regular task')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Regular task')
+        self.assertEqual(result.time_entries[1]['sub_activity'], '')
+
+    def test_parse_sub_activity_with_special_characters(self) -> None:
+        note_data = {
+            'id': 'special_chars_sub_activity',
+            'title': 'Special Characters Test',
+            'text': '☐ 0900 Work 1. Review PR #123 & merge\n☐ 1000 Meeting 2. Q&A session @ office',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 2)
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Review PR #123 & merge')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Meeting')
+        self.assertEqual(result.time_entries[1]['sub_activity'], 'Q&A session @ office')
+
+    def test_parse_sub_activity_with_numbers_in_text(self) -> None:
+        note_data = {
+            'id': 'numbers_in_text',
+            'title': 'Numbers In Text Test',
+            'text': '☐ 0900 Work 1. Fixed 3 bugs in module 5\n☐ 1000 Meeting 2. Review 2024 Q1 plan',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 2)
+        self.assertEqual(result.time_entries[0]['main_activity'], 'Work')
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Fixed 3 bugs in module 5')
+        self.assertEqual(result.time_entries[1]['main_activity'], 'Meeting')
+        self.assertEqual(result.time_entries[1]['sub_activity'], 'Review 2024 Q1 plan')
+
+    def test_parse_sequential_numbered_activities_same_main_activity(self) -> None:
+        note_data = {
+            'id': 'sequential_numbered',
+            'title': 'Sequential Numbered Test',
+            'text': '☐ 0900 Coding 1. Setup environment\n☐ 0930 Coding 2. Write tests\n☐ 1000 Coding 3. Implement feature\n☐ 1030 Coding 4. Code review',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T10:30:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 4)
+        for i, expected_sub in enumerate(['Setup environment', 'Write tests', 'Implement feature', 'Code review'], 1):
+            self.assertEqual(result.time_entries[i-1]['main_activity'], 'Coding')
+            self.assertEqual(result.time_entries[i-1]['sub_activity'], expected_sub)
+
+    def test_parse_non_sequential_numbered_activities(self) -> None:
+        note_data = {
+            'id': 'non_sequential',
+            'title': 'Non-Sequential Test',
+            'text': '☐ 0900 Work 5. Advanced task\n☐ 1000 Work 1. Basic task\n☐ 1100 Work 3. Medium task',
+            'timestamps': {
+                'created': '2024-01-15T09:00:00Z',
+                'edited': '2024-01-15T11:00:00Z'
+            }
+        }
+        result = self.parser.parse(note_data)
+        
+        self.assertEqual(len(result.time_entries), 3)
+        self.assertEqual(result.time_entries[0]['sub_activity'], 'Advanced task')
+        self.assertEqual(result.time_entries[1]['sub_activity'], 'Basic task')
+        self.assertEqual(result.time_entries[2]['sub_activity'], 'Medium task')
+
 
 if __name__ == '__main__':
     unittest.main()
