@@ -59,7 +59,7 @@
             "description": "Original text line from the note"
           }
         },
-        "required": ["timestamp", "time", "activity", "main_activity", "sub_activity", "raw_line"]
+        "required": ["timestamp", "time", "activity", "raw_line"]
       }
     },
     "raw_text": {
