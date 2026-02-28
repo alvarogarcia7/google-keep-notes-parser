@@ -111,6 +111,17 @@ class TimeEntryParser(NoteParser):
         except (ValueError, AttributeError):
             return timestamp.split('T')[0] if 'T' in timestamp else timestamp.split(' ')[0]
     
+    def _parse_activity(self, activity: str) -> Tuple[str, str]:
+        pattern = r'^(.+?)\s+\d+\.\s+(.+)$'
+        match = re.match(pattern, activity)
+        
+        if match:
+            main_activity = match.group(1).strip()
+            sub_activity = match.group(2).strip()
+            return main_activity, sub_activity
+        
+        return activity, ''
+    
     def _extract_time_entries(self, text: str, created_timestamp: str) -> Tuple[List[Dict[str, Any]], List[str]]:
         entries: List[Dict[str, Any]] = []
         parse_warnings: List[str] = []
@@ -135,11 +146,15 @@ class TimeEntryParser(NoteParser):
                     else:
                         timestamp_str = f"{time_str}:00"
                     
+                    main_activity, sub_activity = self._parse_activity(activity)
+                    
                     entries.append({
                         'timestamp': timestamp_str,
                         'time': time_str,
                         'date': base_date,
                         'activity': activity,
+                        'main_activity': main_activity,
+                        'sub_activity': sub_activity,
                         'raw_line': line.strip()
                     })
         

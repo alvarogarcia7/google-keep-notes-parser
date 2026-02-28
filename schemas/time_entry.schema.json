@@ -46,12 +46,20 @@
             "type": "string",
             "description": "Description of the activity"
           },
+          "main_activity": {
+            "type": "string",
+            "description": "Main activity component extracted from activity string"
+          },
+          "sub_activity": {
+            "type": "string",
+            "description": "Sub-activity component extracted from activity string (empty if not present)"
+          },
           "raw_line": {
             "type": "string",
             "description": "Original text line from the note"
           }
         },
-        "required": ["timestamp", "time", "activity", "raw_line"]
+        "required": ["timestamp", "time", "activity", "main_activity", "sub_activity", "raw_line"]
       }
     },
     "raw_text": {
