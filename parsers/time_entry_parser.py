@@ -294,10 +294,7 @@ class TimeEntryParser(NoteParser):
                 original_order.append(time_str)
                 
                 if time_minutes < last_time_minutes:
-                    if not spans_multiple_days:
-                        parse_warnings.append(f"Non-monotonic time detected: {time_str} after previous entries (not allowed when created and edited dates match)")
-                    
-                    if current_date:
+                    if current_date and spans_multiple_days:
                         current_date = current_date + timedelta(days=1)
                 
                 if current_date:
@@ -309,7 +306,7 @@ class TimeEntryParser(NoteParser):
                 
                 if self._is_start_activity(activity) and previous_entry and self._is_stop_activity(previous_entry['activity']):
                     pass
-                elif previous_entry and self._is_start_activity(activity):
+                elif previous_entry and self._is_start_activity(activity) and time_minutes >= last_time_minutes:
                     prev_time = previous_entry['time']
                     sleep_date: Optional[datetime] = None
                     if current_date:
@@ -377,7 +374,8 @@ class TimeEntryParser(NoteParser):
                     f"Time entries are out of chronological order. "
                     f"Original order: {original_order_filtered}, Sorted order: {sorted_order}"
                 )
-                parse_warnings.append(warning_msg)
+                if warning_msg not in parse_warnings:
+                    parse_warnings.append(warning_msg)
         
         return entries, parse_warnings
     
