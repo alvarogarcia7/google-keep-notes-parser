@@ -215,8 +215,8 @@ parsed_data = registry.parse(note_data)
    - `end`/`fin`: Stops parsing until next entry
    - `cont`/`continue`: Continues the last work task
 8. **Day transitions:**
-   - `sleep`/`dormir`: Ends the current day, advances to next day
-   - `wake up`/`woke up`/`despertar`: Starts a new day, auto-generates sleep entry
+   - `stop`: Ends the current day, advances to next day
+   - `start`: Starts a new day, auto-generates stop entry
 9. **Project classification:** Activities are classified as 'work' or 'personal'
 
 **Input Example:**
@@ -224,7 +224,7 @@ parsed_data = registry.parse(note_data)
 {
   "id": "xyz789.uvw012",
   "title": "Daily Log - 2023-10-15",
-  "text": "☐ 637 wake up\n☐ 9 breakfast\n☐ 930 1030 work 1. CMS\n☐ 1100 cont\n☐ 1445 st",
+  "text": "☐ 637 start\n☐ 9 breakfast\n☐ 930 1030 work 1. CMS\n☐ 1100 cont\n☐ 1445 st",
   "labels": ["timetracking"],
   "timestamps": {
     "created": "2023-10-15T06:37:00",
@@ -246,22 +246,22 @@ parsed_data = registry.parse(note_data)
       "timestamp": "2023-10-14T21:00:00",
       "time": "21:00",
       "date": "2023-10-14",
-      "activity": "sleep",
-      "main_activity": "sleep",
+      "activity": "stop",
+      "main_activity": "stop",
       "sub_activity": "",
       "project_type": "personal",
-      "project": "sleep",
-      "raw_line": "[auto-generated from wake up]"
+      "project": "stop",
+      "raw_line": "[auto-generated from start]"
     },
     {
       "timestamp": "2023-10-15T06:37:00",
       "time": "06:37",
       "date": "2023-10-15",
-      "activity": "wake up",
-      "main_activity": "wake up",
+      "activity": "start",
+      "main_activity": "start",
       "sub_activity": "",
       "project_type": "personal",
-      "raw_line": "☐ 637 wake up"
+      "raw_line": "☐ 637 start"
     },
     {
       "timestamp": "2023-10-15T09:00:00",
@@ -306,7 +306,7 @@ parsed_data = registry.parse(note_data)
       "raw_line": "☐ 1445 st"
     }
   ],
-  "raw_text": "☐ 637 wake up\n☐ 9 breakfast\n☐ 930 1030 work 1. CMS\n☐ 1100 cont\n☐ 1445 st",
+  "raw_text": "☐ 637 start\n☐ 9 breakfast\n☐ 930 1030 work 1. CMS\n☐ 1100 cont\n☐ 1445 st",
   "warnings": []
 }
 ```

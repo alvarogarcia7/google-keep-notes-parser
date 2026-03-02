@@ -1,15 +1,10 @@
 start_keywords:
-  - wake up
-  - woke up
-  - despertar
-  - awake
+  - start
 
 end_keywords:
-  - sleep
-  - dormir
+  - stop
   - end
   - fin
-  - bed
 
 continue_keywords:
   - cont
@@ -29,4 +24,4 @@ personal_projects:
   - shower
   - commute
   - toilet
-  - sleep
+  - stop

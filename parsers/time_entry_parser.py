@@ -308,25 +308,25 @@ class TimeEntryParser(NoteParser):
                     pass
                 elif previous_entry and self._is_start_activity(activity) and time_minutes >= last_time_minutes:
                     prev_time = previous_entry['time']
-                    sleep_date: Optional[datetime] = None
+                    stop_date: Optional[datetime] = None
                     if current_date:
-                        sleep_date = current_date - timedelta(days=1)
+                        stop_date = current_date - timedelta(days=1)
                     else:
-                        sleep_date = base_date - timedelta(days=1) if base_date else None
+                        stop_date = base_date - timedelta(days=1) if base_date else None
                     
-                    if sleep_date:
-                        sleep_entry = {
-                            'timestamp': f"{sleep_date.strftime('%Y-%m-%d')}T{prev_time}:00",
+                    if stop_date:
+                        stop_entry = {
+                            'timestamp': f"{stop_date.strftime('%Y-%m-%d')}T{prev_time}:00",
                             'time': prev_time,
-                            'date': sleep_date.strftime('%Y-%m-%d'),
-                            'activity': 'sleep',
-                            'main_activity': 'sleep',
+                            'date': stop_date.strftime('%Y-%m-%d'),
+                            'activity': 'stop',
+                            'main_activity': 'stop',
                             'sub_activity': '',
                             'project_type': 'personal',
-                            'project': 'sleep',
-                            'raw_line': '[auto-generated from wake up]'
+                            'project': 'stop',
+                            'raw_line': '[auto-generated from start]'
                         }
-                        entries.append(sleep_entry)
+                        entries.append(stop_entry)
                 
                 main_activity, sub_activity = self._parse_activity(activity)
                 project_type = self._classify_project(activity)
@@ -347,7 +347,7 @@ class TimeEntryParser(NoteParser):
                     entry['duration'] = self._time_to_minutes(end_time_str) - self._time_to_minutes(start_time_str)
                 
                 if self._is_stop_activity(activity):
-                    entry['project'] = 'sleep'
+                    entry['project'] = 'stop'
                     if current_date:
                         next_date = current_date + timedelta(days=1)
                         current_date = next_date
