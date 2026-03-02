@@ -74,7 +74,7 @@
           },
           "project": {
             "type": "string",
-            "description": "Specific project name (e.g., 'sleep' for sleep activities)"
+            "description": "Specific project name (e.g., 'stop' for end of day activities)"
           },
           "raw_line": {
             "type": "string",

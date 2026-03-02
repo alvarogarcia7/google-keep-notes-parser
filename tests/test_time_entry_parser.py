@@ -11,7 +11,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'test123',
             'title': 'Daily Log',
-            'text': '☐ 637 Woke up\n☐ 845 Breakfast\n☐ 1030 Meeting',
+            'text': '☐ 637 start\n☐ 845 Breakfast\n☐ 1030 Meeting',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T10:30:00Z'
@@ -23,7 +23,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'test456',
             'title': 'Work Log',
-            'text': '☐ 0637 Woke up\n☐ 1053 Coffee break\n☐ 1420 Lunch',
+            'text': '☐ 0637 start\n☐ 1053 Coffee break\n☐ 1420 Lunch',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T14:20:00Z'
@@ -35,7 +35,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'test789',
             'title': 'Mixed Log',
-            'text': '☐ 637 Woke up\n☐ 1053 Coffee\n☐ 730 Exercise',
+            'text': '☐ 637 start\n☐ 1053 Coffee\n☐ 730 Exercise',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T10:53:00Z'
@@ -47,7 +47,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'test_whitespace',
             'title': 'Whitespace Test',
-            'text': '☐  637   Woke up  \n☐ 1053  Coffee break\n☐  1420    Lunch  ',
+            'text': '☐  637   start  \n☐ 1053  Coffee break\n☐  1420    Lunch  ',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T14:20:00Z'
@@ -59,7 +59,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'test_single',
             'title': 'Single Entry',
-            'text': '☐ 0637 Woke up',
+            'text': '☐ 0637 start',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T06:37:00Z'
@@ -124,7 +124,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'test_subnotes',
             'title': 'With Sub-notes',
-            'text': '☐ 0637 Woke up\nSome regular text\n☐ 1053 Coffee break\nMore notes here\n☐ 1420 Lunch',
+            'text': '☐ 0637 start\nSome regular text\n☐ 1053 Coffee break\nMore notes here\n☐ 1420 Lunch',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T14:20:00Z'
@@ -136,7 +136,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'test_checked',
             'title': 'Checked Boxes',
-            'text': '☑ 0637 Woke up\n☑ 1053 Coffee break\n☐ 1420 Lunch',
+            'text': '☑ 0637 start\n☑ 1053 Coffee break\n☐ 1420 Lunch',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T14:20:00Z'
@@ -148,7 +148,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'parse_test',
             'title': 'Parse Test',
-            'text': '☐ 0637 Woke up\n☐ 1053 Coffee break\n☐ 1420 Lunch',
+            'text': '☐ 0637 start\n☐ 1053 Coffee break\n☐ 1420 Lunch',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T14:20:00Z'
@@ -162,7 +162,7 @@ class TestTimeEntryParser(unittest.TestCase):
         self.assertEqual(len(result.time_entries), 3)
         
         self.assertEqual(result.time_entries[0]['time'], '06:37')
-        self.assertEqual(result.time_entries[0]['activity'], 'Woke up')
+        self.assertEqual(result.time_entries[0]['activity'], 'start')
         self.assertEqual(result.time_entries[1]['time'], '10:53')
         self.assertEqual(result.time_entries[1]['activity'], 'Coffee break')
         self.assertEqual(result.time_entries[2]['time'], '14:20')
@@ -172,7 +172,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'sort_test',
             'title': 'Sort Test',
-            'text': '☐ 1420 Lunch\n☐ 0637 Woke up\n☐ 1053 Coffee break',
+            'text': '☐ 1420 Lunch\n☐ 0637 Morning\n☐ 1053 Coffee break',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T14:20:00Z'
@@ -189,7 +189,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': '3digit_test',
             'title': '3 Digit Test',
-            'text': '☐ 637 Woke up\n☐ 845 Breakfast',
+            'text': '☐ 637 start\n☐ 845 Breakfast',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T08:45:00Z'
@@ -205,7 +205,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'subnotes_test',
             'title': 'Sub-notes Test',
-            'text': '☐ 0637 Woke up\nThis is a regular note\nNot a time entry\n☐ 1053 Coffee break',
+            'text': '☐ 0637 start\nThis is a regular note\nNot a time entry\n☐ 1053 Coffee break',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T10:53:00Z'
@@ -221,7 +221,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'raw_test',
             'title': 'Raw Test',
-            'text': '☐ 0637 Woke up\n☐ 1053 Coffee',
+            'text': '☐ 0637 start\n☐ 1053 Coffee',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T10:53:00Z'
@@ -229,13 +229,13 @@ class TestTimeEntryParser(unittest.TestCase):
         }
         result = self.parser.parse(note_data)
         
-        self.assertEqual(result.raw_text, '☐ 0637 Woke up\n☐ 1053 Coffee')
+        self.assertEqual(result.raw_text, '☐ 0637 start\n☐ 1053 Coffee')
 
     def test_parse_generates_full_timestamps(self) -> None:
         note_data = {
             'id': 'timestamp_test',
             'title': 'Timestamp Test',
-            'text': '☐ 0637 Woke up',
+            'text': '☐ 0637 start',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T06:37:00Z'
@@ -249,7 +249,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'rawline_test',
             'title': 'Raw Line Test',
-            'text': '☐ 0637 Woke up early today',
+            'text': '☐ 0637 start early today',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T06:37:00Z'
@@ -257,7 +257,7 @@ class TestTimeEntryParser(unittest.TestCase):
         }
         result = self.parser.parse(note_data)
         
-        self.assertEqual(result.time_entries[0]['raw_line'], '☐ 0637 Woke up early today')
+        self.assertEqual(result.time_entries[0]['raw_line'], '☐ 0637 start early today')
 
     def test_parse_raises_error_for_non_dict(self) -> None:
         with self.assertRaises(ValueError):
@@ -267,7 +267,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'warning_test',
             'title': 'Out of Order',
-            'text': '☐ 1420 Lunch\n☐ 0637 Woke up\n☐ 1053 Coffee',
+            'text': '☐ 1420 Lunch\n☐ 0637 Morning\n☐ 1053 Coffee',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T14:20:00Z'
@@ -277,15 +277,14 @@ class TestTimeEntryParser(unittest.TestCase):
         result = self.parser.parse(note_data)
         
         self.assertEqual(len(result.warnings), 1)
-        self.assertIn('out of chronological order', result.warnings[0].lower())
-        self.assertIn("['14:20', '06:37', '10:53']", result.warnings[0])
-        self.assertIn("['06:37', '10:53', '14:20']", result.warnings[0])
+        self.assertIn('non-monotonic time detected', result.warnings[0].lower())
+        self.assertIn('06:37', result.warnings[0])
 
     def test_parse_no_warning_for_in_order_chronological_notes(self) -> None:
         note_data = {
             'id': 'no_warning_test',
             'title': 'In Order',
-            'text': '☐ 0637 Woke up\n☐ 1053 Coffee\n☐ 1420 Lunch',
+            'text': '☐ 0637 start\n☐ 1053 Coffee\n☐ 1420 Lunch',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T14:20:00Z'
@@ -341,7 +340,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'missing_timestamps',
             'title': 'Missing Timestamps',
-            'text': '☐ 0637 Woke up\n☐ 1053 Coffee',
+            'text': '☐ 0637 start\n☐ 1053 Coffee',
             'timestamps': {}
         }
         result = self.parser.parse(note_data)
@@ -352,7 +351,7 @@ class TestTimeEntryParser(unittest.TestCase):
     def test_parse_handles_missing_title(self) -> None:
         note_data = {
             'id': 'missing_title',
-            'text': '☐ 0637 Woke up\n☐ 1053 Coffee',
+            'text': '☐ 0637 start\n☐ 1053 Coffee',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T10:53:00Z'
@@ -399,7 +398,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'dataclass_test',
             'title': 'Dataclass Test',
-            'text': '☐ 0637 Woke up\n☐ 1053 Coffee',
+            'text': '☐ 0637 start\n☐ 1053 Coffee',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T10:53:00Z'
@@ -420,7 +419,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'sub_activity_test',
             'title': 'Sub-Activity Test',
-            'text': '☐ 0637 Woke up\n☐ 1103 work 1. CMS',
+            'text': '☐ 0637 start\n☐ 1103 work 1. CMS',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T11:03:00Z'
@@ -437,7 +436,7 @@ class TestTimeEntryParser(unittest.TestCase):
         note_data = {
             'id': 'no_sub_activity_test',
             'title': 'No Sub-Activity Test',
-            'text': '☐ 0637 Woke up\n☐ 1053 Coffee break',
+            'text': '☐ 0637 start\n☐ 1053 Coffee break',
             'timestamps': {
                 'created': '2024-01-15T06:37:00Z',
                 'edited': '2024-01-15T10:53:00Z'
@@ -446,8 +445,8 @@ class TestTimeEntryParser(unittest.TestCase):
         result = self.parser.parse(note_data)
         
         self.assertEqual(len(result.time_entries), 2)
-        self.assertEqual(result.time_entries[0]['activity'], 'Woke up')
-        self.assertEqual(result.time_entries[0]['main_activity'], 'Woke up')
+        self.assertEqual(result.time_entries[0]['activity'], 'start')
+        self.assertEqual(result.time_entries[0]['main_activity'], 'start')
         self.assertEqual(result.time_entries[0]['sub_activity'], '')
         self.assertEqual(result.time_entries[1]['activity'], 'Coffee break')
         self.assertEqual(result.time_entries[1]['main_activity'], 'Coffee break')
