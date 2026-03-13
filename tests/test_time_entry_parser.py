@@ -277,7 +277,7 @@ class TestTimeEntryParser(unittest.TestCase):
         result = self.parser.parse(note_data)
         
         self.assertEqual(len(result.warnings), 1)
-        self.assertIn('non-monotonic time detected', result.warnings[0].lower())
+        self.assertIn('time entries are out of chronological order', result.warnings[0].lower())
         self.assertIn('06:37', result.warnings[0])
 
     def test_parse_no_warning_for_in_order_chronological_notes(self) -> None:
