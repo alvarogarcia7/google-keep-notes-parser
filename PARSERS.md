@@ -196,21 +196,38 @@ parsed_data = registry.parse(note_data)
 
 ### 2. TimeEntryParser
 
-**Purpose:** Extracts time-tracking entries from notes using time codes.
+**Purpose:** Extracts time-tracking entries from notes using time codes with advanced parsing rules.
 
 **Detection Criteria:**
-- Notes containing 2+ lines with time code format: `<3-4 digit time> <activity>`
-- Time codes: `930` (9:30), `1445` (14:45), etc.
+- Notes containing 2+ lines with time code format: `<1-4 digit time> <activity>`
+- Time codes: `9` (9:00), `930` (9:30), `1445` (14:45), etc.
+
+**Parsing Rules:**
+1. **Date handling:** The date field is set to the date of the first entry (not the note creation date)
+2. **Time validation:** Times must be between 0 and 2359 (00:00 to 23:59)
+3. **Monotonic times:** Times must increase chronologically, EXCEPT when creation and modification dates differ
+4. **Time formats:**
+   - 24H by default: `9` = 09:00, `930` = 09:30, `1445` = 14:45
+   - 12H with am/pm: `9am` = 09:00, `3pm` = 15:00, `930a` = 09:30
+5. **Continuation pattern:** `1030 1130 task` indicates task from 10:30 to 11:30
+6. **Activity shortcuts:** `st` = strength training, `gym` = gym class, `wk` = work
+7. **Control keywords:**
+   - `end`/`fin`: Stops parsing until next entry
+   - `cont`/`continue`: Continues the last work task
+8. **Day transitions:**
+   - `stop`: Ends the current day, advances to next day
+   - `start`: Starts a new day, auto-generates stop entry
+9. **Project classification:** Activities are classified as 'work' or 'personal'
 
 **Input Example:**
 ```json
 {
   "id": "xyz789.uvw012",
   "title": "Daily Log - 2023-10-15",
-  "text": "900 Started morning standup\n930 Code review for PR #234\n1100 Development work on feature X\n1445 Team meeting",
+  "text": "☐ 637 start\n☐ 9 breakfast\n☐ 930 1030 work 1. CMS\n☐ 1100 cont\n☐ 1445 st",
   "labels": ["timetracking"],
   "timestamps": {
-    "created": "2023-10-15T09:00:00",
+    "created": "2023-10-15T06:37:00",
     "edited": "2023-10-15T15:00:00"
   }
 }
@@ -222,35 +239,75 @@ parsed_data = registry.parse(note_data)
   "note_id": "xyz789.uvw012",
   "title": "Daily Log - 2023-10-15",
   "date": "2023-10-15",
-  "created": "2023-10-15T09:00:00",
+  "created": "2023-10-15T06:37:00",
   "last_updated": "2023-10-15T15:00:00",
   "time_entries": [
     {
+      "timestamp": "2023-10-14T21:00:00",
+      "time": "21:00",
+      "date": "2023-10-14",
+      "activity": "stop",
+      "main_activity": "stop",
+      "sub_activity": "",
+      "project_type": "personal",
+      "project": "stop",
+      "raw_line": "[auto-generated from start]"
+    },
+    {
+      "timestamp": "2023-10-15T06:37:00",
+      "time": "06:37",
+      "date": "2023-10-15",
+      "activity": "start",
+      "main_activity": "start",
+      "sub_activity": "",
+      "project_type": "personal",
+      "raw_line": "☐ 637 start"
+    },
+    {
       "timestamp": "2023-10-15T09:00:00",
       "time": "09:00",
-      "activity": "Started morning standup",
-      "raw_line": "900 Started morning standup"
+      "date": "2023-10-15",
+      "activity": "breakfast",
+      "main_activity": "breakfast",
+      "sub_activity": "",
+      "project_type": "personal",
+      "raw_line": "☐ 9 breakfast"
     },
     {
       "timestamp": "2023-10-15T09:30:00",
       "time": "09:30",
-      "activity": "Code review for PR #234",
-      "raw_line": "930 Code review for PR #234"
+      "end_time": "10:30",
+      "duration": 60,
+      "date": "2023-10-15",
+      "activity": "",
+      "main_activity": "work",
+      "sub_activity": "CMS",
+      "project_type": "work",
+      "raw_line": "☐ 930 1030 work 1. CMS"
     },
     {
       "timestamp": "2023-10-15T11:00:00",
       "time": "11:00",
-      "activity": "Development work on feature X",
-      "raw_line": "1100 Development work on feature X"
+      "date": "2023-10-15",
+      "activity": "work 1. CMS",
+      "main_activity": "work",
+      "sub_activity": "CMS",
+      "project_type": "work",
+      "raw_line": "☐ 1100 cont"
     },
     {
       "timestamp": "2023-10-15T14:45:00",
       "time": "14:45",
-      "activity": "Team meeting",
-      "raw_line": "1445 Team meeting"
+      "date": "2023-10-15",
+      "activity": "strength training",
+      "main_activity": "strength training",
+      "sub_activity": "",
+      "project_type": "personal",
+      "raw_line": "☐ 1445 st"
     }
   ],
-  "raw_text": "900 Started morning standup\n930 Code review for PR #234\n1100 Development work on feature X\n1445 Team meeting"
+  "raw_text": "☐ 637 start\n☐ 9 breakfast\n☐ 930 1030 work 1. CMS\n☐ 1100 cont\n☐ 1445 st",
+  "warnings": []
 }
 ```
 

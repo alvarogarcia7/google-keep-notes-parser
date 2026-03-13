@@ -25,6 +25,7 @@ dependencies = [
     "pillow",
     "jsonschema",
     "nats-py>=2.6.0",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]
@@ -77,6 +78,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "jsonschema.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "yaml.*"
 ignore_missing_imports = true
 
 [dependency-groups]
