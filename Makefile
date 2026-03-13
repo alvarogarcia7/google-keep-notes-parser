@@ -14,7 +14,7 @@ help:
 	@echo "  help          - Show this help message"
 
 install:
-	pip install -r requirements.txt
+	uv sync
 
 run:
 	python kim.py --help
@@ -29,7 +29,7 @@ lint: mypy
 	ruff check parsers/ parse_notes.py kim.py
 
 test:
-	pytest tests/ test_training_parser.py -v
+	uv run pytest tests/ test_training_parser.py -v
 
 clean:
 	rm -rf mdfiles/
