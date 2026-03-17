@@ -26,7 +26,7 @@ mypy:
 	mypy parsers/ parse_notes.py
 
 lint: mypy
-	ruff check parsers/ parse_notes.py kim.py
+	ruff check parsers/ parse_notes.py
 
 test:
 	uv run pytest tests/ test_training_parser.py test_next_parser.py -v
