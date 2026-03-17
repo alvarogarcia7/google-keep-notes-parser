@@ -1,7 +1,7 @@
 import re
 import json
 import os
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import Any, Dict, List
 from parsers.base import NoteParser
 
