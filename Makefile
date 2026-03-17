@@ -29,7 +29,7 @@ lint: mypy
 	ruff check parsers/ parse_notes.py kim.py
 
 test:
-	uv run pytest tests/ test_training_parser.py -v
+	uv run pytest tests/ test_training_parser.py test_next_parser.py -v
 
 clean:
 	rm -rf mdfiles/
