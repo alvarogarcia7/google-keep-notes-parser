@@ -14,7 +14,7 @@ from pathlib import Path
 
 import nats
 
-NATS_URL = os.environ.get("NATS_URL", "nats://localhost:4222")
+NATS_URL = os.environ.get("NATS_URL", "nats://docker:4222")
 TOPIC = "messages.10.raw"
 
 

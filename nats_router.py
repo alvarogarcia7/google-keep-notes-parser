@@ -19,7 +19,7 @@ from parsers.training_parser import TrainingParser
 from parsers.next_parser import NextParser
 from parsers.generic_notes_parser import GenericNotesParser
 
-NATS_URL = os.environ.get("NATS_URL", "nats://localhost:4222")
+NATS_URL = os.environ.get("NATS_URL", "nats://docker:4222")
 INPUT_TOPIC = "messages.10.raw"
 
 TYPE_TO_TOPIC = {
