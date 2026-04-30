@@ -82,11 +82,22 @@ async def main():
     """Subscribe to messages.10.raw and route to type-specific topics."""
     registry = setup_registry()
 
-    try:
-        nc = await nats.connect(NATS_URL)
-    except Exception as e:
-        print(f"Error: Could not connect to NATS at {NATS_URL}")
-        print(f"Make sure NATS server is running: {e}")
+    nc = None
+    for attempt in range(5):
+        try:
+            nc = await nats.connect(NATS_URL, connect_timeout=2)
+            break
+        except Exception as e:
+            if attempt < 4:
+                print(f"Connection attempt {attempt + 1}/5 failed, retrying in 1s...")
+                await asyncio.sleep(1)
+            else:
+                print(f"Error: Could not connect to NATS at {NATS_URL} after 5 attempts")
+                print(f"Make sure NATS server is running: {e}")
+                sys.exit(1)
+
+    if not nc:
+        print(f"Error: NATS connection failed")
         sys.exit(1)
 
     print(f"🔄 Router started, listening on '{INPUT_TOPIC}'...")
