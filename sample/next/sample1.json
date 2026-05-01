@@ -1,0 +1,9 @@
+{
+  "id": "next-sample-001",
+  "title": "Next",
+  "text": "Next\n\nProject Alpha\n\n- [ ] Write documentation\n- [x] Set up CI/CD pipeline\n- [ ] Code review process\n\nProject Beta\n\n- [ ] Deploy to staging\n- [ ] Performance testing\n- [x] Database migration",
+  "timestamps": {
+    "created": "2026-05-01T09:30:00",
+    "edited": "2026-05-01T10:15:00"
+  }
+}
