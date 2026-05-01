@@ -18,6 +18,21 @@ NATS_URL = os.environ.get("NATS_URL", "nats://docker:4222")
 TOPIC = "messages.10.raw"
 
 
+async def _connect_with_retry(url: str) -> nats.aio.client.Client:
+    """Connect to NATS with retry logic."""
+    for attempt in range(5):
+        try:
+            return await nats.connect(url, connect_timeout=2)
+        except Exception as e:
+            if attempt < 4:
+                print(f"Connection attempt {attempt + 1}/5 failed, retrying in 1s...")
+                await asyncio.sleep(1)
+            else:
+                print(f"Error: Could not connect to NATS at {url} after 5 attempts")
+                print(f"Make sure NATS server is running: {e}")
+                sys.exit(1)
+
+
 async def publish_notes(input_dir: str):
     """Publish all JSON notes from a directory to NATS."""
     input_path = Path(input_dir)
@@ -33,23 +48,7 @@ async def publish_notes(input_dir: str):
 
     print(f"Found {len(json_files)} note(s) to publish")
 
-    nc = None
-    for attempt in range(5):
-        try:
-            nc = await nats.connect(NATS_URL, connect_timeout=2)
-            break
-        except Exception as e:
-            if attempt < 4:
-                print(f"Connection attempt {attempt + 1}/5 failed, retrying in 1s...")
-                await asyncio.sleep(1)
-            else:
-                print(f"Error: Could not connect to NATS at {NATS_URL} after 5 attempts")
-                print(f"Make sure NATS server is running: {e}")
-                sys.exit(1)
-
-    if not nc:
-        print(f"Error: NATS connection failed")
-        sys.exit(1)
+    nc = await _connect_with_retry(NATS_URL)
 
     try:
         for json_file in json_files:
