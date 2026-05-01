@@ -1,0 +1,15 @@
+{
+  "id": "22222222222.33333333333333",
+  "title": "Daily Time Log",
+  "text": "☐ 9 start\n☐ 930 work\n☐ 1100 meeting\n☐ 1200 lunch\n☐ 1300 work\n☐ 1700 stop",
+  "archived": false,
+  "trashed": false,
+  "timestamps": {
+    "created": "2026-01-24 09:00:00.000000+00:00",
+    "edited": "2026-01-24 17:00:00.000000+00:00"
+  },
+  "labels": [],
+  "media_paths": [],
+  "blob_names": [],
+  "keep_url": "https://keep.google.com/#NOTE/22222222222.33333333333333"
+}
