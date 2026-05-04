@@ -9,8 +9,6 @@ import json
 import os
 import ssl
 import sys
-import uuid
-from datetime import datetime
 from pathlib import Path
 
 import nats
@@ -22,7 +20,8 @@ if not NATS_URL:
 
 CERTS_DIR = os.environ.get("CERTS_DIR", "/tmp/nats-certs")
 INPUT_TOPIC = "messages.30.type.hn.10.parsed"
-OUTPUT_DIR = Path("/tmp/nats/messages.30.type.hn.10.parsed")
+OUTPUT_DIR = Path("/tmp/nats") / INPUT_TOPIC
+MESSAGE_COUNTER_FILE = OUTPUT_DIR / ".counter"
 
 
 def _make_ssl_ctx() -> ssl.SSLContext:
@@ -34,6 +33,22 @@ def _make_ssl_ctx() -> ssl.SSLContext:
         keyfile=f"{CERTS_DIR}/client.key"
     )
     return ctx
+
+
+def _get_next_message_number() -> int:
+    """Get the next message number from counter file."""
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        if MESSAGE_COUNTER_FILE.exists():
+            count = int(MESSAGE_COUNTER_FILE.read_text().strip())
+        else:
+            count = 0
+        count += 1
+        MESSAGE_COUNTER_FILE.write_text(str(count))
+        return count
+    except Exception as e:
+        print(f"Warning: Could not read counter file: {e}")
+        return 1
 
 
 async def _connect_with_retry(url: str) -> nats.aio.client.Client:
@@ -54,24 +69,17 @@ async def _connect_with_retry(url: str) -> nats.aio.client.Client:
 
 async def write_hackernews_message(input_msg: dict) -> None:
     """Write HackerNews parsed message to file."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-    # Use message ID or generate a new one
-    msg_id = input_msg.get("id", str(uuid.uuid4()))
-    note_id = input_msg.get("note_id", "unknown")
-    item_id = input_msg.get("parsed", {}).get("item_id", "unknown")
-
-    # Create filename: timestamp_itemid_messageid.json
-    timestamp = datetime.now().isoformat().replace(":", "-").split(".")[0]
-    filename = f"{timestamp}_{item_id}_{msg_id[:8]}.json"
+    msg_num = _get_next_message_number()
+    filename = f"{msg_num}.json"
     filepath = OUTPUT_DIR / filename
 
     try:
         with open(filepath, "w") as f:
             json.dump(input_msg, f, indent=2)
 
+        item_id = input_msg.get("parsed", {}).get("item_id", "unknown")
         title = input_msg.get("parsed", {}).get("title", "Untitled")[:60]
-        print(f"✓ Saved HackerNews item #{item_id}")
+        print(f"✓ Saved message #{msg_num} - HackerNews item #{item_id}")
         print(f"  Title: {title}...")
         print(f"  File: {filepath}")
     except Exception as e:
