@@ -1,17 +1,32 @@
 #!/usr/bin/env python3
 """
 NATS Router for Google Keep Notes
-Listens to messages.10.raw.type.googlenotes and publishes to messages.20.googlenotes
+Listens to messages.10.raw.type.googlenotes and publishes to:
+- messages.20.googlenotes (generic Google Notes)
+- messages.20.hn (HackerNews detected notes)
 """
 
 import asyncio
 import json
 import os
+import re
 import ssl
 import sys
 import uuid
+from pathlib import Path
 
 import nats
+
+# Add parser path for HackerNewsParser
+_repo_root = Path(__file__).parent.parent
+_parser_path = _repo_root / "parsers"
+if str(_parser_path) not in sys.path:
+    sys.path.insert(0, str(_parser_path))
+
+try:
+    from hackernews_parser import HackerNewsParser
+except ImportError:
+    HackerNewsParser = None
 
 NATS_URL = os.environ.get("NATS_URL")
 if not NATS_URL:
@@ -51,26 +66,53 @@ async def _connect_with_retry(url: str) -> nats.aio.client.Client:
 
 
 async def route_google_notes(input_msg: dict, client: nats.aio.client.Client) -> None:
-    """Transform Google Keep note to messages.20.googlenotes format."""
+    """Transform Google Keep note to appropriate messages.20.* format.
+
+    Detects HackerNews content and routes to messages.20.hn,
+    otherwise routes to messages.20.googlenotes.
+    """
     original_note = input_msg.get("note", {})
-
-    # Create standardized message format
-    routed_message = {
-        "id": input_msg.get("id", str(uuid.uuid4())),
-        "message_type": "googlenotes",
-        "note": {
-            "id": original_note.get("id", str(uuid.uuid4())),
-            "title": original_note.get("title", "Untitled"),
-            "text": original_note.get("text"),
-            "url": original_note.get("url"),
-            "date": input_msg.get("date"),
-        },
-        "source": "google-keep"
-    }
-
-    await client.publish(OUTPUT_TOPIC, json.dumps(routed_message).encode())
     title = original_note.get("title", "Untitled")
-    print(f"✓ Routed to messages.20.googlenotes: {title}")
+
+    # Try to detect HackerNews
+    is_hackernews = False
+    if HackerNewsParser:
+        parser = HackerNewsParser()
+        is_hackernews = parser.can_parse(original_note)
+
+    # Route HackerNews to messages.20.hn
+    if is_hackernews:
+        routed_message = {
+            "id": input_msg.get("id", str(uuid.uuid4())),
+            "message_type": "hackernews",
+            "note": {
+                "id": original_note.get("id", str(uuid.uuid4())),
+                "title": title,
+                "text": original_note.get("text"),
+                "url": original_note.get("url"),
+                "date": input_msg.get("date"),
+            },
+            "source": "google-keep"
+        }
+        topic = "messages.20.hn"
+        await client.publish(topic, json.dumps(routed_message).encode())
+        print(f"✓ Routed to messages.20.hn (HackerNews): {title}")
+    else:
+        # Route generic Google Notes to messages.20.googlenotes
+        routed_message = {
+            "id": input_msg.get("id", str(uuid.uuid4())),
+            "message_type": "googlenotes",
+            "note": {
+                "id": original_note.get("id", str(uuid.uuid4())),
+                "title": title,
+                "text": original_note.get("text"),
+                "url": original_note.get("url"),
+                "date": input_msg.get("date"),
+            },
+            "source": "google-keep"
+        }
+        await client.publish(OUTPUT_TOPIC, json.dumps(routed_message).encode())
+        print(f"✓ Routed to messages.20.googlenotes: {title}")
 
 
 async def main() -> None:
